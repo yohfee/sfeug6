@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Classification</title>
+  <style>
+    div {
+      display: flex;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>これなぁに</h1>
+
+  <div><img src="/img/kani.jpg" /></div>
+  <div><img src="/img/neko.jpg" /></div>
+  <div><img src="/img/keitra.jpg" /></div>
+  <div><img src="/img/kabutomushi.webp" /></div>
+  <div><img src="/img/machinegun.jpg" /></div>
+  <div><img src="/img/beer.jpg" /></div>
+  <div><img src="/img/yakyuu.jpg" /></div>
+  <div><img src="/img/ma.jpg" /></div>
+  <div><img src="/img/maitake.jpg" /></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.0.0/dist/tf.min.js"></script>
+  <script type="module">
+    import { INCEPTION_CLASSES } from './labels.js';
+
+    (async () => {
+      await tf.ready();
+      const modelPath = 'https://tfhub.dev/google/tfjs-model/imagenet/inception_v3/classification/3/default/1';
+      const model = await tf.loadGraphModel(modelPath, { fromTFHub: true });
+
+      document.addEventListener('click', e => {
+        if (e.target.nodeName !== 'IMG') return;
+
+        tf.tidy(() => {
+          const tensor = tf.browser.fromPixels(e.target);
+          const readyfied = tf.image.resizeBilinear(tensor, [299, 299], true).div(255).reshape([1, 299, 299, 3]);
+          const result = model.predict(readyfied);
+          const { indices } = tf.topk(result, 3);
+          const predictions = indices.dataSync();
+
+          const li1 = document.createElement('li');
+          li1.textContent = INCEPTION_CLASSES[predictions[0]];
+          const li2 = document.createElement('li');
+          li2.textContent = INCEPTION_CLASSES[predictions[1]];
+          const li3 = document.createElement('li');
+          li3.textContent = INCEPTION_CLASSES[predictions[2]];
+          const ol = document.createElement('ol');
+          ol.appendChild(li1);
+          ol.appendChild(li2);
+          ol.appendChild(li3);
+          e.target.parentNode.appendChild(ol);
+        });
+      });
+    })();
+  </script>
+</body>
+
+</html>
